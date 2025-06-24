@@ -3,8 +3,8 @@ import type { BookmarkTypes } from "../types/bookmarkTypes";
 
 type BookmarkListProps = {
   bookmarks: BookmarkTypes[];
-  onToggleFavorite?: (id: number) => void;
-  onDelete?: (id: number) => void;
+  onToggleFavorite?: (id: string, currentFavorite: boolean) => void;
+  onDelete?: (id: string) => void;
   onEdit?: (bookmark: BookmarkTypes) => void;
 };
 

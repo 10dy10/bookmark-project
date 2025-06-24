@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import type { BookmarkTypes } from "../types/bookmarkTypes";
 
 type BookmarkInput = Omit<BookmarkTypes, "id" | "favorite">;

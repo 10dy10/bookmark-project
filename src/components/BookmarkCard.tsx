@@ -1,10 +1,9 @@
-import React from "react";
 import type { BookmarkTypes } from "../types/bookmarkTypes";
 
 type BookmarkCardProps = {
   bookmark: BookmarkTypes;
-  onToggleFavorite?: (id: number) => void; // 즐겨찾기 토글 함수 (선택)
-  onDelete?: (id: number) => void; // 삭제 함수 (선택)
+  onToggleFavorite?: (id: string, currentFavorite: boolean) => void;
+  onDelete?: (id: string) => void;
   onEdit?: (bookmark: BookmarkTypes) => void;
 };
 
@@ -30,7 +29,10 @@ export default function BookmarkCard({
 
       <div className="flex items-center space-x-3">
         <button
-          onClick={() => onToggleFavorite && onToggleFavorite(bookmark.id!)}
+          onClick={() =>
+            onToggleFavorite &&
+            onToggleFavorite(bookmark.id!, bookmark.favorite)
+          }
           className={`text-xl ${
             bookmark.favorite ? "text-yellow-400" : "text-gray-400"
           }`}

@@ -1,36 +1,91 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import SearchBar from "../components/SearchBar";
 import CategoryFilter from "../components/CategoryFilter";
 import BookmarkList from "../components/BookmarkList";
 import BookmarkForm from "../components/BookmarkForm";
 import type { BookmarkTypes } from "../types/bookmarkTypes";
-import { saveBookmarks, loadBookmarks } from "../utils/storage";
+import {
+  doc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  addDoc,
+  getDocs,
+  DocumentData,
+  QueryDocumentSnapshot,
+  onSnapshot,
+} from "firebase/firestore";
+import { db } from "../../firebase";
+import { useAuth } from "../context/AuthContext";
 
 export type BookmarkInput = Omit<BookmarkTypes, "id" | "favorite">;
 
 export default function Home() {
   // 검색어 상태
   const [searchTerm, setSearchTerm] = useState("");
-
-  // 선택된 카테고리 상태 ('All' 기본값)
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("All"); // 선택된 카테고리 상태 ('All' 기본값)
   const [showModal, setShowModal] = useState(false);
   const [bookmarks, setBookmarks] = useState<BookmarkTypes[]>([]);
   const [editingBookmark, setEditingBookmark] = useState<BookmarkTypes | null>(
     null
   );
+  const { user } = useAuth();
+
+  const fetchBookmarks = async () => {
+    if (!user) return;
+
+    try {
+      const snapshot = await getDocs(
+        collection(db, "users", user.uid, "bookmarks")
+      );
+      if (snapshot.empty) {
+        console.log("북마크가 없습니다.");
+        setBookmarks([]);
+        return;
+      }
+      const fetched: BookmarkTypes[] = snapshot.docs.map(
+        (doc: QueryDocumentSnapshot<DocumentData>) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title,
+            url: data.url,
+            category: data.category,
+            favorite: data.favorite,
+          };
+        }
+      );
+
+      setBookmarks(fetched);
+    } catch (err) {
+      console.error("불러오기 실패:", err);
+    }
+  };
 
   useEffect(() => {
-    const saved = loadBookmarks();
-    console.log("🔥 불러온 북마크:", saved);
-    setBookmarks(saved);
-  }, []);
+    fetchBookmarks();
+  }, [user]);
 
   useEffect(() => {
-    if (bookmarks.length === 0) return; // 빈 배열 저장 방지
-    console.log("💾 북마크 변경 감지됨:", bookmarks);
-    saveBookmarks(bookmarks);
-  }, [bookmarks]);
+    if (!user) return;
+
+    const q = collection(db, "users", user.uid, "bookmarks");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetched: BookmarkTypes[] = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          url: data.url,
+          category: data.category,
+          favorite: data.favorite,
+        };
+      });
+      setBookmarks(fetched);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   // 검색 + 카테고리 필터 적용된 북마크 필터링
   const filteredBookmarks = bookmarks.filter((bookmark) => {
@@ -44,13 +99,26 @@ export default function Home() {
 
   const categories = ["All", "Search", "Video", "Dev"];
 
-  const handleSave = (data: BookmarkInput) => {
-    const newBookmark: BookmarkTypes = {
+  const handleSave = async (data: BookmarkInput) => {
+    if (!user) return;
+
+    const newBookmark = {
       ...data,
-      id: Date.now(),
       favorite: false,
+      createdAt: new Date(),
     };
-    setBookmarks((prev) => [...prev, newBookmark]);
+
+    try {
+      await addDoc(
+        collection(db, "users", user.uid, "bookmarks"), // 사용자별 서브컬렉션
+        newBookmark
+      );
+      console.log("북마크 저장됨!");
+      setShowModal(false);
+      // 저장 후 다시 불러오기 (또는 상태 갱신)
+    } catch (err) {
+      console.error("저장 실패:", err);
+    }
     setShowModal(false);
   };
 
@@ -59,21 +127,38 @@ export default function Home() {
     setShowModal(false);
   };
 
-  function handleToggleFavorite(id: number) {
-    // 즐겨찾기 토글 로직
-    setBookmarks((prev) =>
-      prev.map((bookmark) =>
-        bookmark.id === id
-          ? { ...bookmark, favorite: !bookmark.favorite }
-          : bookmark
-      )
-    );
-  }
+  const handleToggleFavorite = async (id: string, currentFavorite: boolean) => {
+    if (!user) return;
 
-  function handleDelete(id: number) {
-    // 삭제 로직
-    setBookmarks((prev) => prev.filter((bookmark) => bookmark.id !== id));
-  }
+    try {
+      const bookmarkRef = doc(db, "users", user.uid, "bookmarks", id);
+      await updateDoc(bookmarkRef, {
+        favorite: !currentFavorite,
+      });
+
+      // 상태 갱신 (로컬 상태를 다시 불러오거나 직접 수정)
+      setBookmarks((prev) =>
+        prev.map((bm) =>
+          bm.id === id ? { ...bm, favorite: !currentFavorite } : bm
+        )
+      );
+    } catch (error) {
+      console.error("즐겨찾기 토글 실패:", error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+
+    try {
+      const bookmarkRef = doc(db, "users", user.uid, "bookmarks", id);
+      await deleteDoc(bookmarkRef);
+
+      setBookmarks((prev) => prev.filter((bm) => bm.id !== id));
+    } catch (error) {
+      console.error("삭제 실패:", error);
+    }
+  };
 
   const handleEdit = (bookmark: BookmarkTypes) => {
     setEditingBookmark(bookmark);

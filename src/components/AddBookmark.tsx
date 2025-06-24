@@ -9,7 +9,6 @@ export default function AddBookmarkPage() {
   const handleSave = (data: any) => {
     console.log("저장된 데이터:", data);
     setShowForm(false);
-    // 여기에 북마크 상태에 추가하는 로직 넣기
   };
 
   const handleCancel = () => {
