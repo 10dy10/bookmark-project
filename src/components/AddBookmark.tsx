@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import BookmarkForm from "../components/BookmarkForm";
 
 const categories = ["Search", "Video", "Dev", "News"];
