@@ -21,7 +21,6 @@ import { useAuth } from "../context/AuthContext";
 export type BookmarkInput = Omit<BookmarkTypes, "id" | "favorite">;
 
 export default function Home() {
-  // 검색어 상태
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All"); // 선택된 카테고리 상태 ('All' 기본값)
   const [showModal, setShowModal] = useState(false);
@@ -87,7 +86,6 @@ export default function Home() {
     return () => unsubscribe();
   }, [user]);
 
-  // 검색 + 카테고리 필터 적용된 북마크 필터링
   const filteredBookmarks = bookmarks.filter((bookmark) => {
     const matchesSearch = bookmark.title
       .toLowerCase()
@@ -109,13 +107,9 @@ export default function Home() {
     };
 
     try {
-      await addDoc(
-        collection(db, "users", user.uid, "bookmarks"), // 사용자별 서브컬렉션
-        newBookmark
-      );
+      await addDoc(collection(db, "users", user.uid, "bookmarks"), newBookmark);
       console.log("북마크 저장됨!");
       setShowModal(false);
-      // 저장 후 다시 불러오기 (또는 상태 갱신)
     } catch (err) {
       console.error("저장 실패:", err);
     }
@@ -136,7 +130,6 @@ export default function Home() {
         favorite: !currentFavorite,
       });
 
-      // 상태 갱신 (로컬 상태를 다시 불러오거나 직접 수정)
       setBookmarks((prev) =>
         prev.map((bm) =>
           bm.id === id ? { ...bm, favorite: !currentFavorite } : bm
