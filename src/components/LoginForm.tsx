@@ -73,17 +73,16 @@ export default function LoginForm({ onLoginSuccess }: Props) {
         </button>
       </form>
       <button
+        onClick={handleGoogleLogin}
+        className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 mt-2"
+      >
+        구글 로그인
+      </button>
+      <button
         className="mt-4 text-sm text-blue-600 underline"
         onClick={() => setIsRegister(!isRegister)}
       >
         {isRegister ? "로그인하러 가기" : "회원가입하기"}
-      </button>
-
-      <button
-        onClick={handleGoogleLogin}
-        className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 mt-4"
-      >
-        구글 로그인
       </button>
     </div>
   );
