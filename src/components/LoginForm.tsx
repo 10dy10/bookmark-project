@@ -44,7 +44,7 @@ export default function LoginForm({ onLoginSuccess }: Props) {
   };
 
   return (
-    <div className="max-w-sm mx-auto p-6 bg-white rounded shadow">
+    <div className="max-w-sm mx-auto p-6 bg-white rounded shadow fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
       <h2 className="text-2xl mb-4">{isRegister ? "회원가입" : "로그인"}</h2>
       {error && <p className="text-red-600 mb-2">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
